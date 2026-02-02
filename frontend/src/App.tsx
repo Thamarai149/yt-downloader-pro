@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './styles.css';
+import backgroundGif from './background.gif';
 
 interface VideoInfo {
   title: string;
@@ -234,14 +235,14 @@ export default function App() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       getVideoInfo();
     }
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ backgroundImage: `url(${backgroundGif})` }}>
       <header className="header">
         <h1>🎬 YT Downloader Pro</h1>
         <p>Download YouTube videos and audio in multiple qualities</p>
@@ -254,7 +255,7 @@ export default function App() {
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Paste YouTube URL here... (e.g., https://youtube.com/watch?v=...)"
               className="url-input"
             />

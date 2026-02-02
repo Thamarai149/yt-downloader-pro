@@ -19,31 +19,80 @@ export const getVideoInfo = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "URL is required" });
     }
 
-    // Type assertion since we know the structure when using dumpSingleJson
-    const info = await ytdl(url, { 
+    // Enhanced options to avoid bot detection
+    const options = {
       dumpSingleJson: true,
       noWarnings: true,
       ignoreErrors: true,
       skipDownload: true,
-      // Add user agent to avoid bot detection
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    });
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      cookiesFromBrowser: 'chrome',
+      sleepInterval: 1,
+      maxSleepInterval: 5,
+      extractorRetries: 3,
+      fragmentRetries: 3,
+      retrySleep: 'linear=1::2',
+      addHeader: [
+        'Accept:text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language:en-us,en;q=0.5',
+        'Sec-Fetch-Mode:navigate'
+      ]
+    };
+
+    // Type assertion since we know the structure when using dumpSingleJson
+    const info = await ytdl(url, options);
     
     const videoData = info as any;
     res.json({ 
       title: videoData.title || "Video Title", 
-      formats: videoData.formats || [] 
+      formats: videoData.formats || [],
+      duration: videoData.duration,
+      uploader: videoData.uploader,
+      view_count: videoData.view_count,
+      upload_date: videoData.upload_date
     });
   } catch (error) {
     console.error("Error getting video info:", error);
-    // Return a generic response instead of failing
-    res.json({ 
-      title: "YouTube Video", 
-      formats: [
-        { format_id: "best", ext: "mp4", resolution: "720p", height: 720 },
-        { format_id: "worst", ext: "mp4", resolution: "360p", height: 360 }
-      ]
-    });
+    
+    // Try fallback method without cookies
+    try {
+      const fallbackOptions = {
+        dumpSingleJson: true,
+        noWarnings: true,
+        ignoreErrors: true,
+        skipDownload: true,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        sleepInterval: 2,
+        extractorRetries: 5
+      };
+      
+      const info = await ytdl(url, fallbackOptions);
+      const videoData = info as any;
+      
+      res.json({ 
+        title: videoData.title || "YouTube Video", 
+        formats: videoData.formats || [],
+        duration: videoData.duration,
+        uploader: videoData.uploader,
+        view_count: videoData.view_count,
+        upload_date: videoData.upload_date
+      });
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError);
+      
+      // Return a generic response with mock data
+      res.json({ 
+        title: "YouTube Video", 
+        formats: [
+          { format_id: "best", ext: "mp4", resolution: "720p", height: 720 },
+          { format_id: "worst", ext: "mp4", resolution: "360p", height: 360 }
+        ],
+        duration: 0,
+        uploader: "Unknown",
+        view_count: 0,
+        upload_date: "Unknown"
+      });
+    }
   }
 };
 
