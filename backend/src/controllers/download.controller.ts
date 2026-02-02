@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import { Request, Response } from "express";
 
-const DIR = path.resolve("C:\Users\THAMARAISELVAN\Videos\Video Song");
+const DIR = path.resolve("Downloads");
 
 // Ensure downloads directory exists
 if (!fs.existsSync(DIR)) {
