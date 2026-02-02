@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './styles.css';
 import backgroundGif from './background.gif';
@@ -53,6 +53,43 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadPath, setDownloadPath] = useState('');
+  const [showPathInput, setShowPathInput] = useState(false);
+  const [newPath, setNewPath] = useState('');
+
+  // Load current download path on component mount
+  useEffect(() => {
+    loadDownloadPath();
+  }, []);
+
+  const loadDownloadPath = async () => {
+    try {
+      const response = await axios.get('/api/download-path');
+      setDownloadPath(response.data.path);
+    } catch (err) {
+      console.error('Failed to load download path:', err);
+    }
+  };
+
+  const updateDownloadPath = async () => {
+    if (!newPath.trim()) {
+      setError('Please enter a valid path');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post('/api/download-path', { path: newPath });
+      setDownloadPath(response.data.path);
+      setShowPathInput(false);
+      setNewPath('');
+      setError('');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update download path');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatDuration = (seconds?: number): string => {
     if (!seconds) return 'Unknown';
@@ -104,7 +141,6 @@ export default function App() {
 
   const getAvailableFormats = (targetHeight: number) => {
     if (!videoInfo?.formats || videoInfo.formats.length === 0) {
-      // Return mock formats when real formats aren't available
       return [{ format_id: 'best', height: targetHeight, ext: 'mp4' }];
     }
     
@@ -143,7 +179,6 @@ export default function App() {
 
       const selectedFormat = availableFormats[0];
       
-      // Simulate progress
       const progressInterval = setInterval(() => {
         setDownloadProgress(prev => {
           if (prev >= 90) {
@@ -194,7 +229,6 @@ export default function App() {
     setDownloadProgress(0);
     
     try {
-      // Simulate progress
       const progressInterval = setInterval(() => {
         setDownloadProgress(prev => {
           if (prev >= 90) {
@@ -205,7 +239,7 @@ export default function App() {
         });
       }, 500);
 
-      const response = await axios.post('/api/audio', { url }, {
+      const response = await axios.post('/api/audio', { url, quality }, {
         responseType: 'blob',
         onDownloadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -241,6 +275,12 @@ export default function App() {
     }
   };
 
+  const handlePathKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      updateDownloadPath();
+    }
+  };
+
   return (
     <div className="container" style={{ backgroundImage: `url(${backgroundGif})` }}>
       <header className="header">
@@ -249,6 +289,49 @@ export default function App() {
       </header>
 
       <main className="main-card">
+        {/* Download Path Section */}
+        <div className="path-section">
+          <div className="path-display">
+            <span className="path-label">📁 Download Path:</span>
+            <span className="path-value">{downloadPath || 'Loading...'}</span>
+            <button
+              onClick={() => setShowPathInput(!showPathInput)}
+              className="btn btn-info btn-small"
+            >
+              📝 Change
+            </button>
+          </div>
+          
+          {showPathInput && (
+            <div className="path-input-group">
+              <input
+                type="text"
+                value={newPath}
+                onChange={(e) => setNewPath(e.target.value)}
+                onKeyDown={handlePathKeyDown}
+                placeholder="Enter new download path (e.g., C:\Downloads\YouTube)"
+                className="path-input"
+              />
+              <button
+                onClick={updateDownloadPath}
+                disabled={loading}
+                className="btn btn-success btn-small"
+              >
+                ✅ Update
+              </button>
+              <button
+                onClick={() => {
+                  setShowPathInput(false);
+                  setNewPath('');
+                }}
+                className="btn btn-warning btn-small"
+              >
+                ❌ Cancel
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="url-section">
           <div className="url-input-group">
             <input
@@ -333,7 +416,6 @@ export default function App() {
                 </h3>
                 <div className="quality-grid">
                   {videoQualities.map((quality) => {
-                    // Always show as available - let backend handle format selection
                     const isAvailable = true;
                     
                     return (
@@ -408,10 +490,10 @@ export default function App() {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🔒</div>
-              <h3 className="feature-title">Safe & Secure</h3>
+              <div className="feature-icon">📁</div>
+              <h3 className="feature-title">Custom Download Path</h3>
               <p className="feature-description">
-                No registration required, completely private and secure
+                Set your preferred download location for easy file management
               </p>
             </div>
           </div>

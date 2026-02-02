@@ -18,6 +18,5 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);
-});
   console.log(`🌐 Web interface available at http://localhost:${PORT}`);
 });
