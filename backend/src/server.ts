@@ -4,7 +4,7 @@ import cors from "cors";
 import routes from "./routes/download.routes";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -16,21 +16,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Initialize Telegram bot after server setup
-const initBot = async () => {
-  try {
-    const botModule = await import("./bot");
-    const bot = botModule.default;
-    if (bot) {
-      console.log(`🤖 Telegram Bot is active`);
-    }
-  } catch (error) {
-    // Bot initialization failed, but server should continue
-    console.log(`⚠️ Telegram Bot initialization failed or no token provided`);
-  }
-};
-
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);
-  initBot();
+  console.log(`🌐 Web interface available at http://localhost:${PORT}`);
 });

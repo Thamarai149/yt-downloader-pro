@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import './styles.css';
 
@@ -52,7 +52,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [downloadProgress, setDownloadProgress] = useState(0);
-  const [activeTab, setActiveTab] = useState<'video' | 'audio'>('video');
 
   const formatDuration = (seconds?: number): string => {
     if (!seconds) return 'Unknown';
@@ -103,7 +102,10 @@ export default function App() {
   };
 
   const getAvailableFormats = (targetHeight: number) => {
-    if (!videoInfo?.formats) return [];
+    if (!videoInfo?.formats || videoInfo.formats.length === 0) {
+      // Return mock formats when real formats aren't available
+      return [{ format_id: 'best', height: targetHeight, ext: 'mp4' }];
+    }
     
     return videoInfo.formats
       .filter(format => 
@@ -330,14 +332,8 @@ export default function App() {
                 </h3>
                 <div className="quality-grid">
                   {videoQualities.map((quality) => {
-                    const availableFormats = getAvailableFormats(
-                      quality.id === '4k' ? 2160 :
-                      quality.id === '2k' ? 1440 :
-                      quality.id === '1080p' ? 1080 :
-                      quality.id === '720p' ? 720 :
-                      quality.id === '480p' ? 480 : 360
-                    );
-                    const isAvailable = availableFormats.length > 0;
+                    // Always show as available - let backend handle format selection
+                    const isAvailable = true;
                     
                     return (
                       <div
@@ -354,7 +350,7 @@ export default function App() {
                           <div className="quality-details">{quality.description}</div>
                         </div>
                         <div className="quality-size">
-                          {isAvailable ? quality.estimatedSize : 'Not Available'}
+                          {quality.estimatedSize}
                         </div>
                       </div>
                     );
@@ -422,7 +418,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p>© 2024 YT Downloader Pro - Download responsibly and respect copyright laws</p>
+        <p>© 2026 YT Downloader Pro - Download responsibly and respect copyright laws</p>
       </footer>
     </div>
   );
