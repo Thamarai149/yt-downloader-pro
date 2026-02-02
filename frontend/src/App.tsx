@@ -158,27 +158,10 @@ export default function App() {
 
     setLoading(true);
     setDownloadProgress(0);
+    setError('');
     
     try {
-      let targetHeight: number;
-      switch (quality) {
-        case '4k': targetHeight = 2160; break;
-        case '2k': targetHeight = 1440; break;
-        case '1080p': targetHeight = 1080; break;
-        case '720p': targetHeight = 720; break;
-        case '480p': targetHeight = 480; break;
-        case '360p': targetHeight = 360; break;
-        default: targetHeight = 720;
-      }
-
-      const availableFormats = getAvailableFormats(targetHeight);
-      if (availableFormats.length === 0) {
-        setError(`${quality} quality not available for this video`);
-        return;
-      }
-
-      const selectedFormat = availableFormats[0];
-      
+      // Simulate progress
       const progressInterval = setInterval(() => {
         setDownloadProgress(prev => {
           if (prev >= 90) {
@@ -191,7 +174,7 @@ export default function App() {
 
       const response = await axios.post('/api/video', { 
         url, 
-        format: selectedFormat.format_id 
+        format: quality 
       }, {
         responseType: 'blob',
         onDownloadProgress: (progressEvent) => {
@@ -205,18 +188,38 @@ export default function App() {
       clearInterval(progressInterval);
       setDownloadProgress(100);
       
+      // Check if response is actually a blob (file) or JSON (error)
+      if (response.data.type && response.data.type.includes('application/json')) {
+        const text = await response.data.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.error || 'Download failed');
+      }
+      
       const blob = new Blob([response.data]);
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `${videoInfo.title || 'video'}_${quality}.mp4`;
+      
+      // Get filename from response headers or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `${videoInfo.title || 'video'}_${quality}.mp4`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
       
       setTimeout(() => setDownloadProgress(0), 2000);
-    } catch (err) {
-      setError(`Failed to download ${quality} video`);
-      console.error(err);
+    } catch (err: any) {
+      console.error('Download error:', err);
+      setError(`Failed to download ${quality} video: ${err.response?.data?.error || err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -227,8 +230,10 @@ export default function App() {
 
     setLoading(true);
     setDownloadProgress(0);
+    setError('');
     
     try {
+      // Simulate progress
       const progressInterval = setInterval(() => {
         setDownloadProgress(prev => {
           if (prev >= 90) {
@@ -252,18 +257,38 @@ export default function App() {
       clearInterval(progressInterval);
       setDownloadProgress(100);
       
+      // Check if response is actually a blob (file) or JSON (error)
+      if (response.data.type && response.data.type.includes('application/json')) {
+        const text = await response.data.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.error || 'Download failed');
+      }
+      
       const blob = new Blob([response.data]);
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `${videoInfo.title || 'audio'}_${quality}kbps.mp3`;
+      
+      // Get filename from response headers or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `${videoInfo.title || 'audio'}_${quality}kbps.mp3`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
       
       setTimeout(() => setDownloadProgress(0), 2000);
-    } catch (err) {
-      setError('Failed to download audio');
-      console.error(err);
+    } catch (err: any) {
+      console.error('Audio download error:', err);
+      setError(`Failed to download audio: ${err.response?.data?.error || err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

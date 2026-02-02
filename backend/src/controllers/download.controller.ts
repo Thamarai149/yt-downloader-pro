@@ -1,9 +1,13 @@
 import ytdl from "youtube-dl-exec";
 import ffmpeg from "fluent-ffmpeg";
+import { exec } from "child_process";
+import { promisify } from "util";
 import path from "path";
 import fs from "fs";
 import os from "os";
 import { Request, Response } from "express";
+
+const execAsync = promisify(exec);
 
 // Type definitions for yt-dlp response
 interface YtDlpInfo {
@@ -93,16 +97,15 @@ export const getVideoInfo = async (req: Request, res: Response) => {
 
     console.log("Fetching video info for:", url);
 
-    const info = await ytdl(url, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-      addHeader: [
-        'referer:youtube.com',
-        'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      ]
-    }) as YtDlpInfo;
+    // Use yt-dlp command directly for better reliability
+    const command = `yt-dlp --dump-single-json --no-check-certificates --no-warnings "${url}"`;
+    
+    const { stdout } = await execAsync(command, { 
+      timeout: 30000,
+      maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+    });
+    
+    const info = JSON.parse(stdout) as YtDlpInfo;
 
     // Process and filter formats
     const videoFormats = info.formats?.filter((format: any) => 
@@ -158,54 +161,88 @@ export const downloadVideo = async (req: Request, res: Response) => {
     // Ensure download directory exists
     ensureDownloadDir(DOWNLOAD_DIR);
 
-    // Get video info first to get title
-    const info = await ytdl(url, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true
-    }) as YtDlpInfo;
+    // Map quality to yt-dlp format selectors
+    let formatSelector: string;
+    switch (format) {
+      case '4k':
+        formatSelector = 'best[height<=2160][ext=mp4]/best[height<=2160]/best[ext=mp4]/best';
+        break;
+      case '2k':
+        formatSelector = 'best[height<=1440][ext=mp4]/best[height<=1440]/best[ext=mp4]/best';
+        break;
+      case '1080p':
+        formatSelector = 'best[height<=1080][ext=mp4]/best[height<=1080]/best[ext=mp4]/best';
+        break;
+      case '720p':
+        formatSelector = 'best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best';
+        break;
+      case '480p':
+        formatSelector = 'best[height<=480][ext=mp4]/best[height<=480]/best[ext=mp4]/best';
+        break;
+      case '360p':
+        formatSelector = 'best[height<=360][ext=mp4]/best[height<=360]/best[ext=mp4]/best';
+        break;
+      default:
+        formatSelector = 'best[ext=mp4]/best';
+    }
 
-    const title = (info.title || 'video').replace(/[^\w\s-]/g, '').trim();
-    const filename = `${title}_${format || 'best'}.%(ext)s`;
-    const outputPath = path.join(DOWNLOAD_DIR, filename);
+    // Create a unique filename with timestamp
+    const timestamp = Date.now();
+    const safeFilename = `video_${timestamp}.%(ext)s`;
+    const outputTemplate = path.join(DOWNLOAD_DIR, safeFilename);
 
-    // Download options
-    const downloadOptions: any = {
-      output: outputPath,
-      format: format || 'best[ext=mp4]',
-      noCheckCertificates: true,
-      noWarnings: true,
-      addHeader: [
-        'referer:youtube.com',
-        'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      ]
-    };
+    console.log(`Using format selector: ${formatSelector}`);
+    console.log(`Output template: ${outputTemplate}`);
 
-    await ytdl(url, downloadOptions);
+    // Use yt-dlp command directly
+    const command = `yt-dlp -f "${formatSelector}" -o "${outputTemplate}" --no-check-certificates --no-warnings "${url}"`;
+    
+    await execAsync(command, { 
+      timeout: 300000, // 5 minutes timeout
+      maxBuffer: 1024 * 1024 * 100 // 100MB buffer
+    });
 
     // Find the downloaded file
     const files = fs.readdirSync(DOWNLOAD_DIR);
-    const downloadedFile = files.find(file => file.startsWith(title.substring(0, 20)));
+    const downloadedFile = files.find(file => file.includes(`video_${timestamp}`));
 
-    if (downloadedFile) {
+    if (downloadedFile && fs.existsSync(path.join(DOWNLOAD_DIR, downloadedFile))) {
       const filePath = path.join(DOWNLOAD_DIR, downloadedFile);
-      const fileBuffer = fs.readFileSync(filePath);
+      const stats = fs.statSync(filePath);
       
+      console.log(`File downloaded successfully: ${downloadedFile}, size: ${stats.size} bytes`);
+      
+      // Stream the file to the response
       res.setHeader('Content-Disposition', `attachment; filename="${downloadedFile}"`);
       res.setHeader('Content-Type', 'video/mp4');
-      res.send(fileBuffer);
+      res.setHeader('Content-Length', stats.size.toString());
+      
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+      
+      // Clean up file after sending (optional)
+      fileStream.on('end', () => {
+        setTimeout(() => {
+          try {
+            fs.unlinkSync(filePath);
+            console.log(`Cleaned up file: ${downloadedFile}`);
+          } catch (cleanupError) {
+            console.log(`Could not clean up file: ${cleanupError}`);
+          }
+        }, 5000); // Wait 5 seconds before cleanup
+      });
+      
     } else {
-      throw new Error('Downloaded file not found');
+      throw new Error('Downloaded file not found or is empty');
     }
 
   } catch (error) {
     console.error("Error downloading video:", error);
-    
-    // Return mock response for development
-    const mockVideoBuffer = Buffer.from('Mock video data for development');
-    res.setHeader('Content-Disposition', 'attachment; filename="sample_video.mp4"');
-    res.setHeader('Content-Type', 'video/mp4');
-    res.send(mockVideoBuffer);
+    res.status(500).json({ 
+      error: "Failed to download video", 
+      details: error instanceof Error ? error.message : "Unknown error",
+      format: req.body.format
+    });
   }
 };
 
@@ -222,58 +259,89 @@ export const downloadAudio = async (req: Request, res: Response) => {
     // Ensure download directory exists
     ensureDownloadDir(DOWNLOAD_DIR);
 
-    // Get video info first to get title
-    const info = await ytdl(url, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true
-    }) as YtDlpInfo;
+    // Map quality to yt-dlp format selectors
+    let formatSelector: string;
+    let audioQuality: string;
+    
+    switch (quality) {
+      case '320':
+        formatSelector = 'bestaudio[abr>=320]/bestaudio';
+        audioQuality = '320';
+        break;
+      case '256':
+        formatSelector = 'bestaudio[abr>=256]/bestaudio';
+        audioQuality = '256';
+        break;
+      case '192':
+        formatSelector = 'bestaudio[abr>=192]/bestaudio';
+        audioQuality = '192';
+        break;
+      case '128':
+        formatSelector = 'bestaudio[abr>=128]/bestaudio';
+        audioQuality = '128';
+        break;
+      case 'best':
+      default:
+        formatSelector = 'bestaudio/best';
+        audioQuality = '0'; // Best quality
+    }
 
-    const title = (info.title || 'audio').replace(/[^\w\s-]/g, '').trim();
-    const filename = `${title}_${quality || 'best'}.%(ext)s`;
-    const outputPath = path.join(DOWNLOAD_DIR, filename);
+    // Create a unique filename with timestamp
+    const timestamp = Date.now();
+    const safeFilename = `audio_${timestamp}.%(ext)s`;
+    const outputTemplate = path.join(DOWNLOAD_DIR, safeFilename);
 
-    // Download options for audio
-    const downloadOptions: any = {
-      output: outputPath,
-      format: 'bestaudio[ext=m4a]/bestaudio',
-      extractAudio: true,
-      audioFormat: 'mp3',
-      audioQuality: quality || '192',
-      noCheckCertificates: true,
-      noWarnings: true,
-      addHeader: [
-        'referer:youtube.com',
-        'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      ]
-    };
+    console.log(`Using format selector: ${formatSelector}`);
+    console.log(`Output template: ${outputTemplate}`);
 
-    await ytdl(url, downloadOptions);
+    // Use yt-dlp command directly for audio extraction
+    const command = `yt-dlp -f "${formatSelector}" --extract-audio --audio-format mp3 --audio-quality ${audioQuality} -o "${outputTemplate}" --no-check-certificates --no-warnings "${url}"`;
+    
+    await execAsync(command, { 
+      timeout: 300000, // 5 minutes timeout
+      maxBuffer: 1024 * 1024 * 50 // 50MB buffer
+    });
 
     // Find the downloaded file
     const files = fs.readdirSync(DOWNLOAD_DIR);
-    const downloadedFile = files.find(file => 
-      file.startsWith(title.substring(0, 20)) && file.endsWith('.mp3')
-    );
+    const downloadedFile = files.find(file => file.includes(`audio_${timestamp}`));
 
-    if (downloadedFile) {
+    if (downloadedFile && fs.existsSync(path.join(DOWNLOAD_DIR, downloadedFile))) {
       const filePath = path.join(DOWNLOAD_DIR, downloadedFile);
-      const fileBuffer = fs.readFileSync(filePath);
+      const stats = fs.statSync(filePath);
       
+      console.log(`Audio downloaded successfully: ${downloadedFile}, size: ${stats.size} bytes`);
+      
+      // Stream the file to the response
       res.setHeader('Content-Disposition', `attachment; filename="${downloadedFile}"`);
       res.setHeader('Content-Type', 'audio/mpeg');
-      res.send(fileBuffer);
+      res.setHeader('Content-Length', stats.size.toString());
+      
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+      
+      // Clean up file after sending (optional)
+      fileStream.on('end', () => {
+        setTimeout(() => {
+          try {
+            fs.unlinkSync(filePath);
+            console.log(`Cleaned up file: ${downloadedFile}`);
+          } catch (cleanupError) {
+            console.log(`Could not clean up file: ${cleanupError}`);
+          }
+        }, 5000); // Wait 5 seconds before cleanup
+      });
+      
     } else {
-      throw new Error('Downloaded file not found');
+      throw new Error('Downloaded audio file not found or is empty');
     }
 
   } catch (error) {
     console.error("Error downloading audio:", error);
-    
-    // Return mock response for development
-    const mockAudioBuffer = Buffer.from('Mock audio data for development');
-    res.setHeader('Content-Disposition', 'attachment; filename="sample_audio.mp3"');
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.send(mockAudioBuffer);
+    res.status(500).json({ 
+      error: "Failed to download audio", 
+      details: error instanceof Error ? error.message : "Unknown error",
+      quality: req.body.quality
+    });
   }
 };
