@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Downloader Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+</head>
+
+<body>
+
+  <!-- Background Animated Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="container glass-panel">
+
+    <header>
+      <div class="logo-container">
+        <img src="logo.png" alt="Logo" class="main-logo">
+        <h1>YT Downloader Pro</h1>
+      </div>
+      <p>Modern YouTube Content Extraction</p>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-target="download-section">Direct Download</button>
+      <button class="tab-btn" data-target="queue-section">Background Queue</button>
+      <button class="tab-btn" data-target="subscriptions-section">Subscriptions</button>
+      <button class="tab-btn" data-target="merge-section">Merge Tool</button>
+    </nav>
+
+    <main>
+      <!-- DIRECT DOWNLOAD SECTION -->
+      <section id="download-section" class="tab-content active">
+        <form id="download-form">
+          <div class="input-group">
+            <label for="url">YouTube URL</label>
+            <input type="url" id="url" name="url" placeholder="https://youtube.com/watch?v=..." required>
+          </div>
+
+          <div class="options-row">
+            <div class="input-group half">
+              <label for="type">Media Type</label>
+              <select id="type" name="type">
+                <option value="audio">Audio</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="options-row" id="audio-options">
+            <div class="input-group half">
+              <label for="format">Audio Format</label>
+              <select id="format" name="format">
+                <option value="mp3">MP3</option>
+                <option value="m4a">M4A</option>
+                <option value="flac">FLAC (Lossless)</option>
+                <option value="wav">WAV</option>
+              </select>
+            </div>
+            <div class="input-group half">
+              <label for="quality">Audio Quality</label>
+              <select id="quality" name="quality">
+                <option value="best">Best Available (Highest Bitrate)</option>
+                <option value="320">320kbps</option>
+                <option value="192">192kbps</option>
+                <option value="128">128kbps</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="options-row hidden" id="video-options">
+            <div class="input-group half">
+              <label for="videoFormat">Video Format</label>
+              <select id="videoFormat" name="videoFormat">
+                <option value="mkv">MKV</option>
+              </select>
+            </div>
+            <div class="input-group half">
+              <label for="videoQuality">Resolution</label>
+              <select id="videoQuality" name="videoQuality">
+                <option value="best">Best Available (Max Resolution)</option>
+                <option value="4k">4K (2160p)</option>
+                <option value="2k">2K (1440p)</option>
+                <option value="1080p">1080p</option>
+                <option value="720p">720p</option>
+                <option value="480p">480p</option>
+                <option value="360p">360p</option>
+              </select>
+            </div>
+          </div>
+
+
+
+          <button type="submit" class="btn primary-btn">
+            <span class="btn-text">Download</span>
+            <div class="spinner hidden"></div>
+          </button>
+        </form>
+
+        <div id="progress-container" class="hidden">
+          <div class="progress-bar-bg">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+          <p id="progress-text">Starting...</p>
+        </div>
+      </section>
+
+      <!-- QUEUE SECTION -->
+      <section id="queue-section" class="tab-content">
+        <div class="queue-controls">
+          <button id="btn-pause-queue" class="btn secondary-btn">Pause</button>
+          <button id="btn-resume-queue" class="btn secondary-btn">Resume</button>
+          <button id="btn-clear-queue" class="btn secondary-btn danger">Clear</button>
+        </div>
+
+        <div class="queue-add">
+          <input type="url" id="queue-url" placeholder="Add URL to background queue...">
+          <button id="btn-add-queue" class="btn primary-btn">Add to Queue</button>
+        </div>
+
+        <div class="queue-lists">
+          <div class="queue-box">
+            <h3>Pending / Active</h3>
+            <ul id="queue-active-list"></ul>
+          </div>
+          <div class="queue-box">
+            <h3>Completed</h3>
+            <ul id="queue-completed-list"></ul>
+          </div>
+          <div class="queue-box">
+            <h3>Failed</h3>
+            <ul id="queue-failed-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBSCRIPTIONS SECTION -->
+      <section id="subscriptions-section" class="tab-content">
+        <div class="queue-add">
+          <input type="text" id="sub-name" placeholder="Channel/Playlist Name..." required style="width: 30%;">
+          <input type="url" id="sub-url" placeholder="URL..." required style="width: 45%;">
+          <button id="btn-add-sub" class="btn primary-btn" style="width: 20%;">Subscribe</button>
+        </div>
+
+        <div class="queue-controls">
+          <button id="btn-sync-subs" class="btn secondary-btn">Sync Now (Download New)</button>
+        </div>
+
+        <div class="queue-box fade-in">
+          <h3>Active Subscriptions</h3>
+          <ul id="subs-list"></ul>
+        </div>
+      </section>
+
+      <!-- MERGE SECTION -->
+      <section id="merge-section" class="tab-content">
+        <form id="merge-form">
+          <div class="options-row">
+            <div class="input-group half">
+              <label for="video-file">Video File</label>
+              <input type="file" id="video-file" name="video" accept="video/*" required style="padding: 10px;">
+            </div>
+            <div class="input-group half">
+              <label for="audio-file">Audio File</label>
+              <input type="file" id="audio-file" name="audio" accept="audio/*" required style="padding: 10px;">
+            </div>
+          </div>
+
+          <button type="submit" class="btn primary-btn" id="merge-submit-btn">
+            <span class="merge-btn-text">Merge Files</span>
+            <div class="merge-spinner hidden spinner"></div>
+          </button>
+        </form>
+
+        <div id="merge-progress-container" class="hidden"
+          style="margin-top: 25px; padding: 20px; border-radius: 12px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-light);">
+          <div class="progress-bar-bg">
+            <div id="merge-progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+          <p id="merge-progress-text" style="text-align: center; font-size: 0.9rem; color: var(--text-muted);">Starting
+            Merge...</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
