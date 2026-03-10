@@ -1,52 +1,73 @@
-# yt-audio-pro
+# 🚀 YT Downloader Pro
 
-A premium, modern YouTube content extraction suite. Powered by the latest `yt-dlp` python module to ensure maximum resolution and bitrate extraction.
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![Python: 3.x](https://img.shields.io/badge/Python-3.x-green.svg)](https://www.python.org/)
+[![Node: 18+](https://img.shields.io/badge/Node-18+-blue.svg)](https://nodejs.org/)
 
-## ✨ Premium Experience
+**YT Downloader Pro** is a premium, high-performance YouTube content extraction suite designed for speed, quality, and aesthetics. Standardized on the **MKV** format and powered by the latest **yt-dlp** engine to guarantee the absolute maximum resolution available (up to 4K).
 
-- **High Resolution Focus:** Automatically fetches the absolute best video (up to 4K) and audio bitrate available. No more low-quality defaults.
-- **Glassmorphism UI:** A stunning web interface featuring animated background orbs, abstract flowing gradients, and a sleek circular brand logo.
-- **MKV Optimized:** Standardized on the MKV format for video to ensure support for all modern high-definition codecs (AV1, VP9) and high-quality audio streams.
+---
 
-## 🚀 Key Features
+## ✨ The Premium Experience
 
-- **Maximum Quality Enforced:** Direct backend sorting (`--format-sort res,quality`) ensures you never settle for 360p or 720p when 4K is available.
-- **Modern Web Interface:** A completely redesigned visual experience with minimalist controls and real-time progress tracking.
-- **Audio Extraction:** High-bitrate audio in MP3, M4A, FLAC, or WAV formats.
-- **Background Queue:** Manage multiple downloads concurrently with background processing and error handling.
-- **Subscriptions:** Monitor Channels or Playlists and automatically sync the newest content.
-- **Merge Tool:** Professional tool to high-quality merge separate video and audio files into a single MKV.
+### 💎 Stunning Visuals
+Experience a state-of-the-art **Glassmorphism** interface featuring:
+- **Dynamic Backgrounds**: Custom abstract flowing gradients with animated "orb" effects.
+- **Sleek Branding**: A professional circular logo integrated directly into the workspace.
+- **Micro-Animations**: Smooth transitions and real-time progress tracking.
+
+### 🎯 Quality First
+- **Maximum Resolution**: Backend logic automatically enforces `--format-sort res,quality`. No more settling for low-quality defaults.
+- **MKV Optimized**: Every video download is optimized for the MKV container, supporting the best modern codecs like AV1 and VP9.
+- **High-Bitrate Audio**: Crystal clear audio extraction in FLAC, MP3, or WAV formats.
+
+---
+
+## 🚀 Core Features
+
+- **Direct High-Res Download**: Paste a URL and get the best file instantly.
+- **MKV Video Tool**: Native MKV support for all video content.
+- **Background Queue**: Add multiple URLs and let the app handle them in the background.
+- **Subscription Sync**: Automatically track and download new content from your favorite channels.
+- **Professional Merge Tool**: High-quality merging of separate video and audio streams.
+
+---
 
 ## 📋 Prerequisites
 
-You **must** have [Python](https://p3.org/) (for `yt-dlp` module) and `ffmpeg` installed on your system.
+Before starting, ensure you have **Python** and **FFmpeg** installed on your system.
+
 ```bash
-# Ensure yt-dlp is updated to the latest version
+# Update to the latest yt-dlp engine
 pip install -U yt-dlp
 ```
 
-## 🛠️ Usage
+---
 
-### Web Interface
-```bash
-npm run web
-```
-Open your browser to `http://localhost:2006` to experience the premium downloader interface.
+## 🛠️ Getting Started
 
-### CLI Basic Download
-```bash
-node src/cli.js download "URL" -t video -q best
-```
+1. **Start the Server**:
+   ```bash
+   npm run web
+   ```
+2. **Access the UI**:
+   Navigate to `http://localhost:2006` in your modern web browser.
 
-### Options:
-- `-t, --type <type>`: audio, video (default: audio)
-- `-f, --format <format>`: mp3, flac, wav for audio; mkv for video (default: mkv)
-- `-q, --quality <quality>`: Always defaults to "best" for maximum resolution. Specific height filters (1080p, 720p) can be requested.
-- `-o, --output <dir>`: output directory (default: ./downloads)
+3. **CLI Usage** (Optional):
+   ```bash
+   node src/cli.js download "URL" -t video -q best
+   ```
+
+---
 
 ## ⚖️ Privacy & Fair Use
-- **No Login Needed:** High-speed downloads without requiring personal account details.
-- **archiving & personal Use:** This tool is intended strictly for personal archiving and fair-use cases. Users should respect copyright laws and YouTube's Terms of Service.
+
+- **Account-Free**: No logins or credentials required.
+- **Privacy Focused**: No tracking or data collection.
+- **Fair Use**: This tool is built for personal archiving and educational purposes. Please respect YouTube's Terms of Service and local copyright laws.
+
+---
 
 ## 📝 License
-ISC
+
+Distributed under the **ISC License**. See `LICENSE` for more information.
