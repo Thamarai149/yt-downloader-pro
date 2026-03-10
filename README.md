@@ -1,104 +1,52 @@
-# yt-audio-pro
+# YT Downloader Pro
 
-A modern, fast, and feature-rich YouTube audio downloader package and CLI tool. Powered by `yt-dlp` to ensure maximum compatibility and extraction reliability.
+A premium, modern YouTube content extraction suite. Powered by the latest `yt-dlp` python module to ensure maximum resolution and bitrate extraction.
 
-## Features
+## ✨ Premium Experience
 
-- **Media Extraction:** Download high-quality audio (MP3, M4A, FLAC, WAV) AND video (MP4, MKV) directly from YouTube URLs.
-- **Video Resolutions:** Supports 360p, 480p, 720p, 1080p, 2K, and 4K resolutions based on availability.
-- **Smart Formatting:** Sensible defaults with configurable profiles ("podcast", "music-hd", "voice-only").
-- **Metadata Embedding:** Automatically extracts and embeds ID3 tags (title, artist, album, duration) and cover art.
-- **Background Queue:** Built-in download manager (`Queue`) with concurrency control, pausing, resuming, and retry logic.
-- **Subscriptions:** "Watch" channels or playlists over time and automatically download new videos.
-- **Plugin Hooks:** Hook into `onDownloadStart`, `onDownloadProgress`, and `onDownloadComplete` to add your own post-processing (e.g. tagging, uploading).
-- **Local Caching:** Avoid re-downloading URLs you've already saved.
+- **High Resolution Focus:** Automatically fetches the absolute best video (up to 4K) and audio bitrate available. No more low-quality defaults.
+- **Glassmorphism UI:** A stunning web interface featuring animated background orbs, abstract flowing gradients, and a sleek circular brand logo.
+- **MKV Optimized:** Standardized on the MKV format for video to ensure support for all modern high-definition codecs (AV1, VP9) and high-quality audio streams.
 
-## Prerequisites
+## 🚀 Key Features
 
-You **must** have [yt-dlp](https://github.com/yt-dlp/yt-dlp) and `ffmpeg` installed on your system path.
+- **Maximum Quality Enforced:** Direct backend sorting (`--format-sort res,quality`) ensures you never settle for 360p or 720p when 4K is available.
+- **Modern Web Interface:** A completely redesigned visual experience with minimalist controls and real-time progress tracking.
+- **Audio Extraction:** High-bitrate audio in MP3, M4A, FLAC, or WAV formats.
+- **Background Queue:** Manage multiple downloads concurrently with background processing and error handling.
+- **Subscriptions:** Monitor Channels or Playlists and automatically sync the newest content.
+- **Merge Tool:** Professional tool to high-quality merge separate video and audio files into a single MKV.
+
+## 📋 Prerequisites
+
+You **must** have [Python](https://p3.org/) (for `yt-dlp` module) and `ffmpeg` installed on your system.
 ```bash
+# Ensure yt-dlp is updated to the latest version
 pip install -U yt-dlp
 ```
 
-## Installation
+## 🛠️ Usage
 
+### Web Interface
 ```bash
-npm install yt-audio-pro
-# or install globally for CLI use
-npm install -g yt-audio-pro
+npm run web
+```
+Open your browser to `http://localhost:2006` to experience the premium downloader interface.
+
+### CLI Basic Download
+```bash
+node src/cli.js download "URL" -t video -q best
 ```
 
-## CLI Usage
-
-### Basic Download
-```bash
-yt-audio-pro download "https://www.youtube.com/watch?v=dQw4w9WgXcQ" -t video -f mp4 -q 1080p
-```
-
-### Options available:
+### Options:
 - `-t, --type <type>`: audio, video (default: audio)
-- `-f, --format <format>`: mp3, flac, wav for audio; mp4, mkv for video
-- `-q, --quality <quality>`: best, 320, 192 for audio; best, 4k, 2k, 1080p, 720p, 480p, 360p for video
-- `-o, --output <dir>`: output directory (default: ./audio)
-- `-p, --profile <profile>`: Use a config profile (e.g. podcast, music-hd)
-- `--no-metadata`: Disable ID3 tags
-- `--no-thumbnail`: Disable cover art embedding
+- `-f, --format <format>`: mp3, flac, wav for audio; mkv for video (default: mkv)
+- `-q, --quality <quality>`: Always defaults to "best" for maximum resolution. Specific height filters (1080p, 720p) can be requested.
+- `-o, --output <dir>`: output directory (default: ./downloads)
 
-### Background Queue
-```bash
-yt-audio-pro queue "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-```
+## ⚖️ Privacy & Fair Use
+- **No Login Needed:** High-speed downloads without requiring personal account details.
+- **archiving & personal Use:** This tool is intended strictly for personal archiving and fair-use cases. Users should respect copyright laws and YouTube's Terms of Service.
 
-### Subscriptions
-Watch a playlist or channel and sync new items:
-```bash
-yt-audio-pro subscribe "My Feed" "https://www.youtube.com/playlist?list=..."
-yt-audio-pro list
-yt-audio-pro sync
-```
-
-## API Usage
-
-The package exposes a clean promise-based API for Node.js integrations:
-
-```javascript
-const { downloadAudio, Queue, Config, PluginSystem } = require('yt-audio-pro');
-
-// 1. Simple Download
-downloadAudio('https://www.youtube.com/watch?v=dQw4w9WgXcQ', {
-  format: 'mp3',
-  quality: '320',
-  outputDir: './my-music',
-  embedMetadata: true
-}).then(result => console.log('Done!', result))
-  .catch(err => console.error('Error:', err));
-
-// 2. Custom Profiles
-Config.setProfile('ultra-low', { format: 'mp3', quality: '96', embedMetadata: false });
-
-downloadAudio('https://youtu.be/...', { profile: 'ultra-low' });
-
-// 3. Queue Management
-Queue.add('https://youtu.be/1...');
-Queue.add('https://youtu.be/2...');
-
-Queue.on('completed', ({ item, result }) => {
-  console.log(`Saved ${item.url} to ${result.outputDir}`);
-});
-
-// 4. Plugin Hooks
-PluginSystem.register('onDownloadComplete', (data) => {
-  if (data.success) {
-    console.log(`Plugin hook triggering for: ${data.url}`);
-    // e.g., send via webhook or begin speech-to-text
-  }
-});
-```
-
-## Privacy & Safety
-- **No Login Required:** Does not require Google/YouTube credentials.
-- **Rate-Limiting Respect:** `yt-dlp` automatically handles request pacing. The `Queue` manager enforces a strict concurrency limit (default: 2) to avoid aggressive network scraping.
-- **Fair Use:** This tool is intended strictly for personal use, archiving, and fair-use cases. Users should respect copyright laws and YouTube's Terms of Service. It strips out bypassing mechanisms to stay compliant.
-
-## License
+## 📝 License
 ISC
