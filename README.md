@@ -1,4 +1,4 @@
-# yt-audio-pro
+# yt-downloader-pro
 
 A modern, fast, and feature-rich YouTube audio downloader package and CLI tool. Powered by `yt-dlp` to ensure maximum compatibility and extraction reliability.
 
