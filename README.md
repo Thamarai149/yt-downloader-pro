@@ -1,4 +1,4 @@
-# YT Downloader Pro
+# yt-audio-pro
 
 A premium, modern YouTube content extraction suite. Powered by the latest `yt-dlp` python module to ensure maximum resolution and bitrate extraction.
 
