@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Output directory for merged files
-const MERGED_DIR = 'C:\\Users\\THAMARAISELVAN\\Downloads\\ytdownloads\\merged';
+const MERGED_DIR = path.join(__dirname, 'downloads', 'merged');
 if (!fs.existsSync(MERGED_DIR)) fs.mkdirSync(MERGED_DIR, { recursive: true });
 
 // Track active streams for direct downloads and merges
